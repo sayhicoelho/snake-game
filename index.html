@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snakedil</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      background-color: black;
+    }
+
+    main {
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+
+    canvas {
+      background-color: white;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .score-text,
+    .score-value {
+      color: white;
+      font-family: sans-serif;
+      text-align: center;
+    }
+
+    .score-text {
+      font-size: 24px;
+    }
+
+    .score-value {
+      display: block;
+      margin-bottom: 16px;
+    }
+
+    .gameover {
+      position: fixed;
+      background-color: rgba(255, 255, 255, .9);
+      width: 100%;
+      height: 100%;
+      color: black;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 48px;
+      user-select: none;
+      flex-direction: column;
+      visibility: hidden;
+    }
+
+    .gameover h1 {
+      margin-top: 64px;
+      margin-bottom: 32px;
+      text-align: center;
+    }
+
+    .gameover-score {
+      font-weight: lighter;
+      font-size: 24px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="score">
+      <h4 class="score-text">
+        Score
+      </h4>
+      <span class="score-value">
+        0
+      </span>
+    </div>
+    <canvas id="canvas"></canvas>
+    <div class="gameover">
+      <h1>
+        Game Over
+      </h1>
+      <h4 class="gameover-score">
+        Score: 0
+      </h4>
+    </div>
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', e => {
+      const canvas = document.getElementById('canvas')
+      const ctx = canvas.getContext('2d')
+
+      const cellSize = 20
+      const horizontalCellCount = 32
+      const verticalCellCount = 24
+
+      canvas.width = horizontalCellCount * cellSize
+      canvas.height = verticalCellCount * cellSize
+
+      const UP = 'up'
+      const DOWN = 'down'
+      const LEFT = 'left'
+      const RIGHT = 'right'
+
+      const player = new Player()
+      const apple = new Apple(randomX(), randomY())
+      const tails = []
+
+      let paused = false
+      let interval = null
+      let score = 0
+      let keyPressed = false
+
+      function render() {
+        const reversedTails = [...tails].reverse()
+
+        reversedTails.forEach((tail, i) => {
+          if (i == tails.length - 1) {
+            tail.x = player.x
+            tail.y = player.y
+          } else {
+            tail.x = reversedTails[i + 1].x
+            tail.y = reversedTails[i + 1].y
+          }
+        })
+
+        if (player.x == apple.x && player.y == apple.y) {
+          apple.x = randomX()
+          apple.y = randomY()
+          tails.push(new Tail(player.x, player.y))
+          score += 1
+          document.querySelector('.score-value').textContent = score
+        }
+
+        switch (player.d) {
+          case UP:
+            player.y -= cellSize
+
+            if (player.y < 0) {
+              player.y = (verticalCellCount * cellSize) - cellSize
+            }
+            break
+          case DOWN:
+            player.y += cellSize
+
+            if (player.y > (verticalCellCount * cellSize) - cellSize) {
+              player.y = 0
+            }
+            break
+          case LEFT:
+            player.x -= cellSize
+
+            if (player.x < 0) {
+              player.x = (horizontalCellCount * cellSize) - cellSize
+            }
+            break
+          case RIGHT:
+            player.x += cellSize
+
+            if (player.x > (horizontalCellCount * cellSize) - cellSize) {
+              player.x = 0
+            }
+            break
+        }
+
+        tails.forEach(tail => {
+          if (player.x == tail.x && player.y == tail.y) {
+            document.querySelector('.gameover').style.visibility = 'visible'
+            document.querySelector('.gameover-score').textContent = `Score: ${score}`
+            clearInterval(interval)
+          }
+        })
+
+        clearCanvas()
+        drawApple()
+        drawTails()
+        drawPlayer()
+      }
+
+      function clearCanvas() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+      }
+
+      function drawPlayer() {
+        ctx.fillStyle = 'black'
+        ctx.fillRect(
+          player.x,
+          player.y,
+          player.w,
+          player.h
+        )
+      }
+
+      function drawApple() {
+        const circle = new Path2D()
+        circle.arc(apple.x + (cellSize / 2), apple.y + (cellSize / 2), 10, 0, 2 * Math.PI)
+        ctx.fillStyle = 'red'
+        ctx.fill(circle)
+      }
+
+      function drawTails() {
+        tails.forEach(tail => {
+          ctx.fillStyle = 'gray'
+          ctx.fillRect(
+            tail.x,
+            tail.y,
+            tail.w,
+            tail.h
+          )
+        })
+      }
+
+      function Player() {
+        this.x = 0
+        this.y = 0
+        this.w = cellSize
+        this.h = cellSize
+        this.d = RIGHT
+      }
+
+      function Apple(x, y) {
+        this.x = x
+        this.y = y
+        this.w = cellSize
+        this.h = cellSize
+      }
+
+      function Tail(x, y) {
+        this.x = x
+        this.y = y
+        this.w = cellSize
+        this.h = cellSize
+      }
+
+      window.addEventListener('keydown', e => {
+        switch (e.key) {
+          case 'ArrowUp':
+            canChangeDir(UP) && (player.d = UP)
+            keyPressed = true
+            break
+          case 'ArrowDown':
+            canChangeDir(DOWN) && (player.d = DOWN)
+            keyPressed = true
+            break
+          case 'ArrowLeft':
+            canChangeDir(LEFT) && (player.d = LEFT)
+            keyPressed = true
+            break
+          case 'ArrowRight':
+            canChangeDir(RIGHT) && (player.d = RIGHT)
+            keyPressed = true
+            break
+          case ' ':
+            paused = !paused
+        }
+      })
+
+      function canChangeDir(dir) {
+        if (keyPressed || (player.d == UP && dir == DOWN)) {
+          return false
+        } else if (keyPressed || (player.d == DOWN && dir == UP)) {
+          return false
+        } else if (keyPressed || (player.d == LEFT && dir == RIGHT)) {
+          return false
+        } else if (keyPressed || (player.d == RIGHT && dir == LEFT)) {
+          return false
+        }
+
+        return true
+      }
+
+      function random(min, max) {
+        return Math.floor(Math.random() * (max - min + 1) + min)
+      }
+
+      function randomCoord(cellCount) {
+        const totalCoords = ((cellCount * cellSize) / cellSize) - 1
+        const coords = Array.from(Array(totalCoords)).map((_, i) => i * cellSize)
+
+        return coords[random(0, coords.length - 1)]
+      }
+
+      function randomX() {
+        return randomCoord(horizontalCellCount)
+      }
+
+      function randomY() {
+        return randomCoord(verticalCellCount)
+      }
+
+      interval = setInterval(() => {
+        !paused && render()
+        keyPressed = false
+      }, 1000 / 10)
+    })
+  </script>
+</body>
+</html>
