@@ -106,8 +106,8 @@
       const ctx = canvas.getContext('2d')
 
       const cellSize = 20
-      const horizontalCellCount = 32
-      const verticalCellCount = 24
+      const horizontalCellCount = 12
+      const verticalCellCount = 8
 
       canvas.width = horizontalCellCount * cellSize
       canvas.height = verticalCellCount * cellSize
@@ -117,9 +117,9 @@
       const LEFT = 'left'
       const RIGHT = 'right'
 
-      const player = new Player()
-      const apple = new Apple(randomX(), randomY())
       const tails = []
+      const player = new Player()
+      const apple = new Apple(randomCoord().x, randomCoord().y)
 
       let paused = false
       let interval = null
@@ -140,8 +140,9 @@
         })
 
         if (player.x == apple.x && player.y == apple.y) {
-          apple.x = randomX()
-          apple.y = randomY()
+          const coord = randomCoord()
+          apple.x = coord.x
+          apple.y = coord.y
           tails.push(new Tail(player.x, player.y))
           score += 1
           document.querySelector('.score-value').textContent = score
@@ -288,19 +289,42 @@
         return Math.floor(Math.random() * (max - min + 1) + min)
       }
 
-      function randomCoord(cellCount) {
-        const totalCoords = ((cellCount * cellSize) / cellSize) - 1
-        const coords = Array.from(Array(totalCoords)).map((_, i) => i * cellSize)
+      function randomCoord() {
+        const totalHorizontalCoords = ((horizontalCellCount * cellSize) / cellSize)
+        const totalVerticalCoords = ((verticalCellCount * cellSize) / cellSize)
+        const totalCoords = totalHorizontalCoords * totalVerticalCoords
+        const coords = Array.from(Array(totalCoords))
+          .map((_, i) => {
+            const multiplyX = (i % totalHorizontalCoords)
+            const multiplyY = (i % totalVerticalCoords)
+            const x = multiplyX * cellSize
+            const y = multiplyY * cellSize
 
-        return coords[random(0, coords.length - 1)]
-      }
+            return {
+              x,
+              y
+            }
+          })
+          .filter(coord => {
+            if (player.x == coord.x && player.y == coord.y) {
+              return false
+            }
 
-      function randomX() {
-        return randomCoord(horizontalCellCount)
-      }
+            for (const tail of tails) {
+              if (tail.x == coord.x && tail.y == coord.y) {
+                return false
+              }
+            }
 
-      function randomY() {
-        return randomCoord(verticalCellCount)
+            return true
+          })
+
+        const coord = coords[random(0, coords.length - 1)]
+
+        return {
+          x: coord.x,
+          y: coord.y
+        }
       }
 
       interval = setInterval(() => {
