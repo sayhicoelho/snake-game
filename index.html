@@ -30,7 +30,8 @@
     }
 
     canvas {
-      background-color: white;
+      background-color: black;
+      border: 1px solid white;
       display: block;
       margin-left: auto;
       margin-right: auto;
@@ -198,7 +199,7 @@
       }
 
       function drawPlayer() {
-        ctx.fillStyle = 'black'
+        ctx.fillStyle = 'white'
         ctx.fillRect(
           player.x,
           player.y,
