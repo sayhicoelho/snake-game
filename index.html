@@ -102,7 +102,7 @@
   </main>
 
   <script>
-    document.addEventListener('DOMContentLoaded', e => {
+    document.addEventListener('DOMContentLoaded', async e => {
       const canvas = document.getElementById('canvas')
       const ctx = canvas.getContext('2d')
 
@@ -118,7 +118,7 @@
       const LEFT = 'left'
       const RIGHT = 'right'
 
-      const tails = []
+      const tails = [new Tail(0, 0)]
       const player = new Player()
       const apple = new Apple(randomCoord().x, randomCoord().y)
 
@@ -126,6 +126,30 @@
       let interval = null
       let score = 0
       let keyPressed = false
+
+      const img1 = new Image(cellSize, cellSize)
+      const img2 = new Image(cellSize, cellSize)
+      const img3 = new Image(cellSize, cellSize)
+      const img4 = new Image(cellSize, cellSize)
+      const img5 = new Image(cellSize, cellSize)
+      const img6 = new Image(cellSize, cellSize)
+      const img7 = new Image(cellSize, cellSize)
+      const img8 = new Image(cellSize, cellSize)
+      const img9 = new Image(cellSize, cellSize)
+      const img10 = new Image(cellSize, cellSize)
+      const img11 = new Image(cellSize, cellSize)
+
+      img1.src = './assets/bolas-up.png'
+      img2.src = './assets/bolas-down.png'
+      img3.src = './assets/bolas-left.png'
+      img4.src = './assets/bolas-right.png'
+      img5.src = './assets/cabeca-up.png'
+      img6.src = './assets/cabeca-down.png'
+      img7.src = './assets/cabeca-left.png'
+      img8.src = './assets/cabeca-right.png'
+      img9.src = './assets/corpo-x.png'
+      img10.src = './assets/corpo-y.png'
+      img11.src = './assets/viagra.png'
 
       function render() {
         const reversedTails = [...tails].reverse()
@@ -199,31 +223,85 @@
       }
 
       function drawPlayer() {
-        ctx.fillStyle = 'white'
-        ctx.fillRect(
-          player.x,
-          player.y,
-          player.w,
-          player.h
-        )
+        // ctx.fillStyle = 'white'
+        // ctx.fillRect(
+        //   player.x,
+        //   player.y,
+        //   player.w,
+        //   player.h
+        // )
+
+        let img
+
+        if (player.d == UP) {
+          img = img5
+        } else if (player.d == DOWN) {
+          img = img6
+        } else if (player.d == LEFT) {
+          img = img7
+        } else {
+          img = img8
+        }
+
+        ctx.drawImage(img, player.x, player.y, player.w, player.h)
       }
 
       function drawApple() {
-        const circle = new Path2D()
-        circle.arc(apple.x + (cellSize / 2), apple.y + (cellSize / 2), 10, 0, 2 * Math.PI)
-        ctx.fillStyle = 'red'
-        ctx.fill(circle)
+        // const circle = new Path2D()
+        // circle.arc(apple.x + (cellSize / 2), apple.y + (cellSize / 2), 10, 0, 2 * Math.PI)
+        // ctx.fillStyle = 'red'
+        // ctx.fill(circle)
+
+        ctx.drawImage(img11, apple.x, apple.y, apple.w, apple.h)
       }
 
       function drawTails() {
-        tails.forEach(tail => {
-          ctx.fillStyle = 'gray'
-          ctx.fillRect(
-            tail.x,
-            tail.y,
-            tail.w,
-            tail.h
-          )
+        tails.forEach((tail, i) => {
+          // ctx.fillStyle = 'gray'
+          // ctx.fillRect(
+          //   tail.x,
+          //   tail.y,
+          //   tail.w,
+          //   tail.h
+          // )
+
+          let img
+
+          if (i == tails.length - 1) {
+            console.log(i)
+            const nextTail = tails[tails.length - 2]
+            let obj
+
+            if (nextTail) {
+              obj = nextTail
+            } else {
+              obj = player
+            }
+
+            if (obj.y < tail.y) {
+              img = img1
+            } else if (obj.y > tail.y) {
+              img = img2
+            } else if (obj.x < tail.x) {
+              img = img3
+            } else {
+              img = img4
+            }
+          } else {
+            let obj = tails[i - 1]
+
+            if (i == 0) {
+              obj = player
+            }
+
+            if (obj.y < tail.y || obj.y > tail.y) {
+              img = img10
+            } else {
+              img = img9
+            }
+          }
+
+          ctx.drawImage(img, tail.x, tail.y, tail.w, tail.h)
         })
       }
 
